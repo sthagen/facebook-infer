@@ -10,7 +10,7 @@ module F = Format
 module Hashtbl = Stdlib.Hashtbl
 
 module Lang : sig
-  type t = C | Hack | Java | Python | Rust | Swift [@@deriving equal]
+  type t = C | Hack | Java | Python | Rust | Swift [@@deriving compare, equal, hash]
 
   val of_string : string -> t option [@@warning "-unused-value-declaration"]
 
@@ -140,8 +140,12 @@ end
 module QualifiedProcName : sig
   type enclosing_class = TopLevel | Enclosing of TypeName.t
 
-  type t = {enclosing_class: enclosing_class; name: ProcName.t} [@@deriving compare, equal, hash]
-  (* procedure name [name] is attached to the name space [enclosing_class] *)
+  type t = {enclosing_class: enclosing_class; name: ProcName.t; lang: Lang.t option}
+  [@@deriving compare, equal, hash]
+  (* procedure name [name] is attached to the name space [enclosing_class], lang used only
+    when the method name is from a language different from default *)
+
+  val make_qualified_proc_name : ?lang:Lang.t -> enclosing_class -> ProcName.t -> t
 
   module Map : Stdlib.Map.S with type key = t
 

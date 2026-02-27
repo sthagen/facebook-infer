@@ -71,10 +71,12 @@ let mk_qualified_proc_name ?loc kind : Textual.QualifiedProcName.t =
   match kind with
   | ModuleBody name ->
       { enclosing_class= Enclosing (typename_of_ident name)
-      ; name= Textual.ProcName.of_string ?loc str_module_body }
+      ; name= Textual.ProcName.of_string ?loc str_module_body
+      ; lang= None }
   | RegularFunction {module_name; function_name} ->
       { enclosing_class= Enclosing (typename_of_ident ?loc module_name)
-      ; name= procname_of_ident function_name }
+      ; name= procname_of_ident function_name
+      ; lang= None }
 
 
 let mk_procdecl_attributes {CodeInfo.co_argcount; co_varnames; is_async} =
@@ -105,7 +107,8 @@ let mk_ident ssa = Textual.Ident.of_int (SSA.id ssa)
 
 let builtin_qual_proc_name name : Textual.QualifiedProcName.t =
   { enclosing_class= Enclosing (Textual.TypeName.of_string "$builtins")
-  ; name= Textual.ProcName.of_string name }
+  ; name= Textual.ProcName.of_string name
+  ; lang= None }
 
 
 let call_builtin name args =

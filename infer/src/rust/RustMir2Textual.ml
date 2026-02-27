@@ -69,7 +69,7 @@ let mk_qualified_proc_name crate (item_meta : Charon.Generated_Types.item_meta) 
     Textual.QualifiedProcName.t =
   let enclosing_class = Textual.QualifiedProcName.TopLevel in
   let name = mk_name crate item_meta.name in
-  {Textual.QualifiedProcName.enclosing_class; name}
+  {Textual.QualifiedProcName.enclosing_class; name; lang= None}
 
 
 let item_meta_to_string crate (item_meta : Charon.Generated_Types.item_meta) : string =
@@ -476,7 +476,8 @@ let mk_terminator (crate : Charon.UllbcAst.crate) (place_map : place_map_ty)
       let proc_name = Textual.ProcName.of_string (fun_name_from_fun_operand crate call.func) in
       let qualified_proc_name =
         { Textual.QualifiedProcName.enclosing_class= Textual.QualifiedProcName.TopLevel
-        ; name= proc_name }
+        ; name= proc_name
+        ; lang= None }
       in
       let dest_exp, dest_typ = mk_exp_from_place ~loc crate place_map call.dest in
       let call_exp =

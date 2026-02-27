@@ -272,10 +272,11 @@ module FixHackInvokeClosure = struct
             TypeName.name= {type_name.name with BaseTypeName.value= chopped_str_name ^ "$static"} }
         in
         ( chopped_type_name
-        , {QualifiedProcName.enclosing_class= Enclosing chopped_static_type_name; name} )
+        , {QualifiedProcName.enclosing_class= Enclosing chopped_static_type_name; name; lang= None}
+        )
     | _ ->
         (* should not happen *)
-        (type_name, {QualifiedProcName.enclosing_class= Enclosing type_name; name})
+        (type_name, {QualifiedProcName.enclosing_class= Enclosing type_name; name; lang= None})
 
 
   let this_varname : VarName.t = VarName.of_string "$this"
@@ -632,7 +633,7 @@ module TransformClosures = struct
 
 
   let closure_call_qualified_procname loc : QualifiedProcName.t =
-    {enclosing_class= Enclosing TypeName.wildcard; name= {value= "call"; loc}}
+    {enclosing_class= Enclosing TypeName.wildcard; name= {value= "call"; loc}; lang= None}
 
 
   let closure_call_exp loc closure args : Exp.t =
