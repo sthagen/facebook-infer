@@ -1,0 +1,32 @@
+// 
+// Copyright (c) Facebook, Inc. and its affiliates.
+//
+// This source code is licensed under the MIT license found in the
+// LICENSE file in the root directory of this source tree.
+
+.source_language = "C" @?
+
+type nested = {d: data; count: int}
+
+type data = {value: int; weight: float}
+
+type int_or_float = {i: int; f: float}
+
+type tagged = {as_int: int; as_double: float; as_char: int}
+
+type has_union = {tag: int; payload: int_or_float}
+
+type with_pointer = {ptr: *int; c: int}
+
+define use_struct(d: data) : int {
+  #node_0: @[40:1]
+      jmp node_1 @[40:1]
+      
+  #node_2: @[40:43]
+      jmp  @[40:43]
+      
+  #node_1: @[40:33]
+      ret 0 @[40:33]
+      
+} @[40:1]
+

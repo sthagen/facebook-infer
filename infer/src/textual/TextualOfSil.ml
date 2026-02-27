@@ -15,6 +15,7 @@ module SilIdent = Ident
 module SilProcdesc = Procdesc
 module SilProcname = Procname
 module SilPvar = Pvar
+module SilSourceFile = SourceFile
 module SilStruct = Struct
 module SilTyp = Typ
 open Textual
@@ -562,13 +563,25 @@ end
 module ModuleBridge = struct
   open Module
 
-  let of_sil ~sourcefile ~lang tenv cfg =
+  let of_sil ?sil_source_file ~sourcefile ~lang tenv cfg =
     let env = TextualDecls.init sourcefile lang in
     let decls =
       Cfg.fold_sorted cfg ~init:[] ~f:(fun decls pdesc ->
           let textual_pdesc = ProcDescBridge.of_sil env tenv pdesc in
           Proc textual_pdesc :: decls )
     in
+    (* Enumerate all structs from the Tenv that haven't been declared yet
+       (some structs are only referenced by type but never accessed via Lfield).
+       Skip dummy structs and structs not defined in the current source file. *)
+    if Lang.is_c lang && Option.is_some sil_source_file then
+      Tenv.fold tenv ~init:() ~f:(fun sil_tname sil_struct () ->
+          if
+            (not sil_struct.SilStruct.dummy)
+            && Option.equal SilSourceFile.equal sil_source_file sil_struct.SilStruct.source_file
+          then
+            let tname = TypeNameBridge.of_sil sil_tname in
+            if Option.is_none (TextualDecls.get_struct env tname) then
+              StructBridge.of_sil tname sil_struct |> TextualDecls.declare_struct env ) ;
     let decls =
       TextualDecls.fold_globals env ~init:decls ~f:(fun decls _ pvar -> Global pvar :: decls)
     in
@@ -592,15 +605,16 @@ let pp_copyright fmt =
   F.fprintf fmt "\n"
 
 
-let from_sil ~lang ?(show_location = false) ~filename tenv cfg =
+let from_sil ~lang ?sil_source_file ?(show_location = false) ~filename tenv cfg =
   Utils.with_file_out filename ~f:(fun oc ->
       let fmt = F.formatter_of_out_channel oc in
       let sourcefile = SourceFile.create filename in
       pp_copyright fmt ;
-      Module.pp ~show_location fmt (ModuleBridge.of_sil ~sourcefile ~lang tenv cfg) ;
+      Module.pp ~show_location fmt (ModuleBridge.of_sil ?sil_source_file ~sourcefile ~lang tenv cfg) ;
       Format.pp_print_flush fmt () )
 
 
 let from_java ~filename tenv cfg = from_sil ~lang:Java ~filename tenv cfg
 
-let from_c ~filename tenv cfg = from_sil ~lang:C ~show_location:true ~filename tenv cfg
+let from_c source_file filename tenv cfg =
+  from_sil ~lang:C ~sil_source_file:source_file ~show_location:true ~filename tenv cfg
