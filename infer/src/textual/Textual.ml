@@ -11,7 +11,7 @@ module L = Logging
 module Hashtbl = Stdlib.Hashtbl
 
 module Lang = struct
-  type t = C | Hack | Java | Python | Rust | Swift [@@deriving compare, equal, hash]
+  type t = C | Hack | Java | Python | Rust | Swift | ObjectiveC [@@deriving compare, equal, hash]
 
   let of_string s =
     match String.lowercase s with
@@ -44,6 +44,8 @@ module Lang = struct
         "Rust"
     | Swift ->
         "Swift"
+    | ObjectiveC ->
+        "Objective-C"
 
 
   let is_swift lang = match lang with Swift -> true | _ -> false
@@ -780,7 +782,7 @@ module ProcDecl = struct
   let to_sig {qualified_name; formals_types} = function
     | Lang.Hack ->
         ProcSig.Hack {qualified_name; arity= Option.map formals_types ~f:List.length}
-    | Lang.Python | Lang.Java | Lang.C | Lang.Rust | Lang.Swift ->
+    | Lang.Python | Lang.Java | Lang.C | Lang.Rust | Lang.Swift | Lang.ObjectiveC ->
         ProcSig.Other {qualified_name}
 
 
@@ -1132,7 +1134,7 @@ end = struct
   let call_sig qualified_name nb_args = function
     | Lang.Hack ->
         ProcSig.Hack {qualified_name; arity= Some nb_args}
-    | Lang.Python | Lang.Java | Lang.C | Lang.Rust | Lang.Swift ->
+    | Lang.Python | Lang.Java | Lang.C | Lang.Rust | Lang.Swift | Lang.ObjectiveC ->
         ProcSig.Other {qualified_name}
 
 

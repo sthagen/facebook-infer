@@ -34,7 +34,7 @@ module VarNameBridge = struct
     match lang with
     | Java | C ->
         SilPvar.get_name pvar |> Mangled.to_string |> of_string
-    | Hack | Python | Rust | Swift ->
+    | Hack | Python | Rust | Swift | ObjectiveC ->
         L.die UserError "of_pvar conversion is not supported in %s mode"
           (Textual.Lang.to_string lang)
 end
@@ -58,7 +58,7 @@ module TypeNameBridge = struct
     match lang with
     | Java | C ->
         SilPvar.get_name pvar |> Mangled.to_string |> of_string
-    | Hack | Python | Rust | Swift ->
+    | Hack | Python | Rust | Swift | ObjectiveC ->
         L.die UserError "of_global_pvar conversion is not supported in %s mode"
           (Textual.Lang.to_string lang)
 

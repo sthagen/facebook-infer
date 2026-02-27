@@ -10,7 +10,7 @@ module F = Format
 module Hashtbl = Stdlib.Hashtbl
 
 module Lang : sig
-  type t = C | Hack | Java | Python | Rust | Swift [@@deriving compare, equal, hash]
+  type t = C | Hack | Java | Python | Rust | Swift | ObjectiveC [@@deriving compare, equal, hash]
 
   val of_string : string -> t option [@@warning "-unused-value-declaration"]
 

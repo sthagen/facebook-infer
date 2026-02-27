@@ -133,6 +133,8 @@ module TypeNameBridge = struct
         SilTyp.Name.C.from_string value
     | Swift, _ ->
         SwiftClass (to_swift_class_name typ)
+    | ObjectiveC, _ ->
+        SilTyp.Name.Objc.from_string value
 end
 
 let hack_dict_type_name = SilTyp.HackClass (HackClassName.make "HackDict")
@@ -207,7 +209,7 @@ let default_return_type (lang : Lang.t) loc =
 
 let wildcard_sil_fieldname lang name =
   match (lang : Lang.t) with
-  | Java | C | Swift ->
+  | Java | C | Swift | ObjectiveC ->
       L.die InternalError "a wildcard fieldname is only supported in Hack or Python"
   | Hack ->
       SilFieldname.make (HackClass HackClassName.wildcard) name
@@ -310,13 +312,15 @@ module ProcDeclBridge = struct
         `Regular (TypeNameBridge.to_python_class_name value args)
 
 
-  let swift_class_name_to_sil = function
+  let swift_objc_class_name_to_sil lang = function
     | QualifiedProcName.TopLevel ->
         None
     | QualifiedProcName.Enclosing {name= {value= "$builtins"}} ->
         Some `Builtin
+    | QualifiedProcName.Enclosing class_name when Lang.is_swift lang ->
+        Some (`Regular (SilTyp.SwiftClass (TypeNameBridge.to_swift_class_name class_name)))
     | QualifiedProcName.Enclosing class_name ->
-        Some (`Regular (TypeNameBridge.to_swift_class_name class_name))
+        Some (`Regular (TypeNameBridge.to_sil lang class_name))
 
 
   let to_sil_tenv lang sourcefile t : SilStruct.tenv_method =
@@ -381,15 +385,25 @@ module ProcDeclBridge = struct
           | None ->
               Mangled.from_string t.qualified_name.name.value
         in
+        let lang = match t.qualified_name.lang with Some lang -> lang | None -> lang in
         match t.qualified_name.enclosing_class with
         | TopLevel ->
-            SilProcname.Swift (SwiftProcname.mk_function mangled)
-            |> SilStruct.mk_tenv_method ?llvm_offset
+            let procname =
+              if Lang.is_swift lang then SilProcname.Swift (SwiftProcname.mk_function mangled)
+              else SilProcname.C (SilProcname.C.from_string (Mangled.to_string mangled))
+            in
+            SilStruct.mk_tenv_method ?llvm_offset procname
         | Enclosing _ -> (
-          match swift_class_name_to_sil t.qualified_name.enclosing_class with
-          | Some (`Regular class_name) ->
-              let class_name = SilTyp.SwiftClass class_name in
+          match swift_objc_class_name_to_sil lang t.qualified_name.enclosing_class with
+          | Some (`Regular class_name) when Lang.is_swift lang ->
               SilProcname.Swift (SwiftProcname.mk_class_method class_name mangled)
+              |> SilStruct.mk_tenv_method ?llvm_offset
+          | Some (`Regular class_name) ->
+              let name = Mangled.to_string mangled in
+              SilProcname.ObjC_Cpp
+                (SilProcname.ObjC_Cpp.make class_name name SilProcname.ObjC_Cpp.ObjCInstanceMethod
+                   (* TODO find out whether instance or class method here *)
+                   SilTyp.NoTemplate [] )
               |> SilStruct.mk_tenv_method ?llvm_offset
           | Some `Builtin ->
               let builtin =
@@ -403,6 +417,8 @@ module ProcDeclBridge = struct
               |> SilStruct.mk_tenv_method ?llvm_offset
           | None ->
               L.die InternalError "unexpected case" ) )
+    | ObjectiveC ->
+        L.die InternalError "ObjectiveC not supported yet"
 
 
   let to_sil lang sourcefile t : Procname.t =
@@ -412,7 +428,7 @@ module ProcDeclBridge = struct
 
   let call_to_sil (lang : Lang.t) sourcefile (callsig : ProcSig.t) t : SilProcname.t =
     match lang with
-    | Java | Python | C | Rust | Swift ->
+    | Java | Python | C | Rust | Swift | ObjectiveC ->
         to_sil lang sourcefile t
     | Hack when Option.is_some t.formals_types ->
         to_sil lang sourcefile t
