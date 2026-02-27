@@ -154,8 +154,8 @@ define test17(var1: int) : int {
       n1 = load &var1 @[115:0]
       store &b <- n1 @[115:0]
       n2 = load &b @[142:11]
-      n3 = __sil_ne(n2, 0) @[142:11]
-      store &z <- (if n3 then 1 else 0) @[142:7]
+      n5 = __sil_ne(n2, 0) @[142:11]
+      store &z <- (if n5 then 1 else 0) @[142:7]
       n7 = load &z @[143:10]
       ret n7 @[143:3]
       
