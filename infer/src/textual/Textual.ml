@@ -364,12 +364,17 @@ end
 module QualifiedProcName = struct
   type enclosing_class = TopLevel | Enclosing of TypeName.t [@@deriving equal, hash, compare]
 
+  type method_kind = ClassMethod | InstanceMethod [@@deriving compare, equal, hash]
+
+  type proc_metadata = {lang: Lang.t option; method_kind: method_kind option}
+  [@@deriving compare, equal, hash]
+
   module T = struct
-    type t = {enclosing_class: enclosing_class; name: ProcName.t; lang: Lang.t option}
+    type t = {enclosing_class: enclosing_class; name: ProcName.t; metadata: proc_metadata option}
     [@@deriving compare, equal, hash]
     (* procedure name [name] is attached to the name space [enclosing_class] *)
 
-    let make_qualified_proc_name ?lang enclosing_class name = {enclosing_class; name; lang}
+    let make_qualified_proc_name ?metadata enclosing_class name = {enclosing_class; name; metadata}
   end
 
   include T
@@ -802,12 +807,12 @@ module ProcDecl = struct
 
   let make_toplevel_name string loc : QualifiedProcName.t =
     let name : ProcName.t = {value= string; loc} in
-    {enclosing_class= TopLevel; name; lang= None}
+    {enclosing_class= TopLevel; name; metadata= None}
 
 
   let make_builtin_name string loc : QualifiedProcName.t =
     let name : ProcName.t = {value= string; loc} in
-    {enclosing_class= Enclosing TypeName.hack_builtin; name; lang= None}
+    {enclosing_class= Enclosing TypeName.hack_builtin; name; metadata= None}
 
 
   let allocate_object_name = make_toplevel_name builtin_allocate Location.Unknown

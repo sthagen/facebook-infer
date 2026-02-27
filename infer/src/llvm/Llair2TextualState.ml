@@ -315,7 +315,9 @@ use the substitution in the code later on. *)
     let global_init_name = Format.sprintf "global_init_%s" global_var in
     let qualified_name =
       Textual.QualifiedProcName.
-        {enclosing_class= TopLevel; name= Textual.ProcName.of_string global_init_name; lang= None}
+        { enclosing_class= TopLevel
+        ; name= Textual.ProcName.of_string global_init_name
+        ; metadata= None }
     in
     { qualified_name
     ; sourcefile

@@ -138,14 +138,18 @@ module TypeName : sig
 end
 
 module QualifiedProcName : sig
-  type enclosing_class = TopLevel | Enclosing of TypeName.t
+  type enclosing_class = TopLevel | Enclosing of TypeName.t [@@deriving equal, hash, compare]
 
-  type t = {enclosing_class: enclosing_class; name: ProcName.t; lang: Lang.t option}
+  type method_kind = ClassMethod | InstanceMethod [@@deriving compare, equal, hash]
+
+  type proc_metadata = {lang: Lang.t option; method_kind: method_kind option}
   [@@deriving compare, equal, hash]
-  (* procedure name [name] is attached to the name space [enclosing_class], lang used only
-    when the method name is from a language different from default *)
 
-  val make_qualified_proc_name : ?lang:Lang.t -> enclosing_class -> ProcName.t -> t
+  type t = {enclosing_class: enclosing_class; name: ProcName.t; metadata: proc_metadata option}
+  [@@deriving compare, equal, hash]
+  (* procedure name [name] is attached to the name space [enclosing_class] *)
+
+  val make_qualified_proc_name : ?metadata:proc_metadata -> enclosing_class -> ProcName.t -> t
 
   module Map : Stdlib.Map.S with type key = t
 

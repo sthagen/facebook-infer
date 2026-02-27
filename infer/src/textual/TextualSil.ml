@@ -323,6 +323,26 @@ module ProcDeclBridge = struct
         Some (`Regular (TypeNameBridge.to_sil lang class_name))
 
 
+  let get_method_kind qualified_name =
+    let method_kind =
+      match qualified_name.QualifiedProcName.metadata with
+      | Some metadata -> (
+        match metadata.method_kind with
+        | Some method_kind ->
+            method_kind
+        | None ->
+            L.die InternalError "unknown ObjC method kind for %a" QualifiedProcName.pp
+              qualified_name )
+      | None ->
+          L.die InternalError "unknown ObjC method kind for %a" QualifiedProcName.pp qualified_name
+    in
+    match method_kind with
+    | InstanceMethod ->
+        SilProcname.ObjC_Cpp.ObjCInstanceMethod
+    | ClassMethod ->
+        SilProcname.ObjC_Cpp.ObjCClassMethod
+
+
   let to_sil_tenv lang sourcefile t : SilStruct.tenv_method =
     let method_name = t.qualified_name.name.ProcName.value in
     match (lang : Lang.t) with
@@ -385,7 +405,13 @@ module ProcDeclBridge = struct
           | None ->
               Mangled.from_string t.qualified_name.name.value
         in
-        let lang = match t.qualified_name.lang with Some lang -> lang | None -> lang in
+        let lang =
+          match t.qualified_name.metadata with
+          | Some metadata ->
+              Option.value metadata.lang ~default:lang
+          | None ->
+              lang
+        in
         match t.qualified_name.enclosing_class with
         | TopLevel ->
             let procname =
@@ -399,11 +425,11 @@ module ProcDeclBridge = struct
               SilProcname.Swift (SwiftProcname.mk_class_method class_name mangled)
               |> SilStruct.mk_tenv_method ?llvm_offset
           | Some (`Regular class_name) ->
+              (* Objective-C case *)
               let name = Mangled.to_string mangled in
+              let objc_method_kind = get_method_kind t.qualified_name in
               SilProcname.ObjC_Cpp
-                (SilProcname.ObjC_Cpp.make class_name name SilProcname.ObjC_Cpp.ObjCInstanceMethod
-                   (* TODO find out whether instance or class method here *)
-                   SilTyp.NoTemplate [] )
+                (SilProcname.ObjC_Cpp.make class_name name objc_method_kind SilTyp.NoTemplate [])
               |> SilStruct.mk_tenv_method ?llvm_offset
           | Some `Builtin ->
               let builtin =

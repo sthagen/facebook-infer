@@ -207,7 +207,7 @@ opt_qualified_pname_and_lparen:
                               let name = {BaseTypeName.value; loc} in
                               QualifiedProcName.Enclosing {name; args=[]})
       in
-      ( {enclosing_class; name; lang= None} : QualifiedProcName.t)
+      ( {enclosing_class; name; metadata= None} : QualifiedProcName.t)
     }
 
 qualified_pname_and_lparen:
@@ -222,7 +222,7 @@ qualified_pname_and_lparen:
     { let loc = location_of_pos $startpos(id) in
       let name : ProcName.t = { value=id; loc } in
       let enclosing_class =  QualifiedProcName.Enclosing tname in
-      ( {enclosing_class; name; lang= None} : QualifiedProcName.t)
+      ( {enclosing_class; name; metadata= None} : QualifiedProcName.t)
     }
 
 attribute:

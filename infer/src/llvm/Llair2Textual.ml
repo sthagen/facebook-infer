@@ -59,7 +59,7 @@ let get_alloc_class_name =
 let builtin_qual_proc_name =
   let enclosing_class = Textual.(QualifiedProcName.Enclosing (TypeName.of_string "$builtins")) in
   fun name : Textual.QualifiedProcName.t ->
-    {enclosing_class; name= Textual.ProcName.of_string name; lang= None}
+    {enclosing_class; name= Textual.ProcName.of_string name; metadata= None}
 
 
 let undef_proc_name = builtin_qual_proc_name "llvm_nondet"
@@ -75,7 +75,7 @@ let is_protocol_witness_optional_deinit_copy lang mangled_name =
 
 let to_proc_name_closure_name s =
   Textual.QualifiedProcName.
-    {enclosing_class= TopLevel; name= Textual.ProcName.of_string s; lang= None}
+    {enclosing_class= TopLevel; name= Textual.ProcName.of_string s; metadata= None}
 
 
 module Var = struct
@@ -177,7 +177,7 @@ let to_qualified_proc_name ?loc method_class_index func_name =
     | None ->
         Textual.QualifiedProcName.TopLevel
   in
-  Textual.QualifiedProcName.{enclosing_class; name= proc_name; lang= None}
+  Textual.QualifiedProcName.{enclosing_class; name= proc_name; metadata= None}
 
 
 let to_name_attr func_name =
@@ -1421,7 +1421,8 @@ let process_globals lang class_method_index method_class_index ~mangled_map ~str
     let class_name = class_from_global ~suffix lang struct_map global in
     let proc_name = Textual.ProcName.of_string name in
     let proc =
-      Textual.QualifiedProcName.{enclosing_class= Enclosing class_name; name= proc_name; lang= None}
+      Textual.QualifiedProcName.
+        {enclosing_class= Enclosing class_name; name= proc_name; metadata= None}
     in
     add_method_to_class_method_index class_method_index class_name proc offset ;
     Textual.ProcName.Hashtbl.replace method_class_index proc_name class_name

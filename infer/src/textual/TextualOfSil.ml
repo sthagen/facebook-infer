@@ -195,7 +195,7 @@ module ProcDeclBridge = struct
           QualifiedProcName.Enclosing (TypeName.of_string (Procname.Java.get_class_name jpname))
         in
         let name = mangle_java_procname jpname |> ProcName.of_string in
-        let qualified_name : QualifiedProcName.t = {enclosing_class; name; lang= None} in
+        let qualified_name : QualifiedProcName.t = {enclosing_class; name; metadata= None} in
         let formals_types =
           Procname.Java.get_parameters jpname |> List.map ~f:TypBridge.annotated_of_sil
         in
@@ -213,7 +213,9 @@ module ProcDeclBridge = struct
         {qualified_name; formals_types= Some formals_types; result_type; attributes}
     | C {c_name} ->
         let name = QualifiedCppName.to_qual_string c_name |> ProcName.of_string in
-        let qualified_name : QualifiedProcName.t = {enclosing_class= TopLevel; name; lang= None} in
+        let qualified_name : QualifiedProcName.t =
+          {enclosing_class= TopLevel; name; metadata= None}
+        in
         { qualified_name
         ; formals_types= Some (List.map ~f:TypBridge.annotated_of_sil args_typ)
         ; result_type= TypBridge.annotated_of_sil ret_typ
@@ -340,7 +342,7 @@ module InstrBridge = struct
   let metadata_name s : QualifiedProcName.t =
     { enclosing_class= TopLevel
     ; name= {value= "__sil_metadata_" ^ s; loc= Location.Unknown}
-    ; lang= None }
+    ; metadata= None }
 
 
   let int_exp i = Exp.Const (Const.Int (Z.of_int i))
